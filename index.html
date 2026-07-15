@@ -1,383 +1,96 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+
+<!DOCTYPE html><html lang="zh-TW"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OOTD Studio</title>
+    <title>OOTD Studio | 自動跳轉版</title>
     <style>
         :root { 
-            --main: #f06292; 
-            --sub: #fce4ec; 
-            --bg: #fffafb; 
-            --text: #1d1d1f; /* Apple 經典深灰 */
-            --blue: #0071e3; /* Premium Apple Blue */
-            --gray: #f5f5f7; 
-            --red: #ff3b30; /* iOS Red */
-            --card-bg: rgba(255, 255, 255, 0.75);
-            --border-radius-lg: 24px;
-            --border-radius-md: 16px;
-            --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --transition-smooth: all 0.3s var(--spring-easing);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --main: #f06292; --sub: #fce4ec; --bg: #fffafb; --text: #4a4a4a;
+            --blue: #819cfd; --gray: #f2f2f7; --red: #ff8a80;
         }
 
-        body.theme-pink { --main: #eba7be; --sub: #fce4ec; --bg: #fffafb; }
-        body.theme-purple { --main: #a087cb; --sub: #ede7f6; --bg: #fafaff; }
+        body.theme-pink { --main: #f06292; --sub: #fce4ec; --bg: #fffafb; }
+        body.theme-purple { --main: #9575cd; --sub: #ede7f6; --bg: #fafaff; }
         body.theme-beige { --main: #a1887f; --sub: #efebe9; --bg: #fffdfc; }
-        body.theme-red { --main: #96b2d2; --sub: #ffebee; --bg: #fffafa; }
+        body.theme-red { --main: #e57373; --sub: #ffebee; --bg: #fffafa; }
         body.theme-green { --main: #7fb482; --sub: #e8f5e9; --bg: #f9fff9; }
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            overflow: hidden; 
-            width: 100vw; 
-            height: 100vh; 
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* 視圖控制與 iOS 卡片展開過場 */
-        .view { 
-            position: fixed; 
-            inset: 0; 
-            display: none; 
-            flex-direction: column; 
-            z-index: 10; 
-            background: var(--bg);
-            animation: app-fade 0.4s var(--spring-easing);
-        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; width: 100vw; height: 100vh; -webkit-tap-highlight-color: transparent; }
+        .view { position: fixed; inset: 0; display: none; flex-direction: column; z-index: 10; }
         .active-view { display: flex; }
 
-        @keyframes app-fade {
-            from { opacity: 0; transform: scale(0.97); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        /* 調色盤 */
+        .home-palette-area { position: absolute; top: 20px; right: 20px; z-index: 9999; }
+        .palette-btn { background: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border:none; }
+        .theme-menu { position: absolute; top: 55px; right: 0; background: white; padding: 12px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; flex-direction: column; gap: 12px; }
+        .theme-menu.open { display: flex; }
+        .theme-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #eee; }
 
-        /* 調色盤：Apple 控制中心懸浮球美學 */
-        .home-palette-area { 
-            position: absolute; 
-            top: calc(20px + env(safe-area-inset-top, 0px)); 
-            right: 20px; 
-            z-index: 9999; 
-        }
-        .palette-btn { 
-            background: rgba(255, 255, 255, 0.85); 
-            width: 46px; 
-            height: 46px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 20px; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08); 
-            border: 1px solid rgba(255,255,255,0.4); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-        .palette-btn:active {
-            transform: scale(0.9);
-        }
-        .theme-menu { 
-            position: absolute; 
-            top: 58px; 
-            right: 0; 
-            background: rgba(255, 255, 255, 0.85); 
-            padding: 12px; 
-            border-radius: 22px; 
-            box-shadow: 0 12px 36px rgba(0,0,0,0.12); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.4);
-            display: none; 
-            flex-direction: column; 
-            gap: 12px; 
-            transform: translateY(-10px);
-            opacity: 0;
-            transition: var(--transition-smooth);
-        }
-        .theme-menu.open { 
-            display: flex; 
-            transform: translateY(0);
-            opacity: 1;
-        }
-        .theme-dot { 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            border: 2px solid #ffffff; 
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-        .theme-dot:hover {
-            transform: scale(1.15);
-        }
+        /* 按鈕與 Overlay */
+        .pill-btn { width: 240px; height: 54px; border-radius: 27px; font-weight: 600; border: none; margin: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .btn-main { background: var(--main); color: white; }
+        .btn-sub { background: white; color: var(--main); border: 2.5px solid var(--main); }
 
-        /* 經典 Apple 膠囊與功能按鈕 */
-        .pill-btn { 
-            width: 260px; 
-            height: 56px; 
-            border-radius: 28px; 
-            font-weight: 600; 
-            font-size: 16px;
-            border: none; 
-            margin: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.04); 
+        /* 按鈕互動回饋：點按時微彈跳放大 + 依主題色自動加深／變淺 */
+        .pill-btn, .btn-main, .btn-sub, .palette-btn, .sheet-btn, .theme-dot {
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+            transform: scale(1);
             cursor: pointer;
-            transition: var(--transition-smooth);
         }
-        .btn-main { 
-            background: var(--main); 
-            color: white; 
+        .pill-btn:active, .btn-main:active, .btn-sub:active, .palette-btn:active, .sheet-btn:active, .theme-dot:active {
+            transform: scale(1.08);
+            transition: transform 0.1s ease-out, filter 0.1s ease;
         }
-        .btn-main:active {
-            transform: scale(0.96);
-            filter: brightness(0.95);
+        /* 實心主色按鈕：按下時自動加深（變暗） */
+        .btn-main:active { filter: brightness(0.86); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        /* 外框次要按鈕：按下時填入主題淺色背景，形成「變淺」的呼應效果 */
+        .btn-sub:active { background: var(--sub); filter: brightness(0.97); }
+        /* 灰底選單按鈕：按下時微幅加深 */
+        .sheet-btn:active { filter: brightness(0.94); }
+        /* 調色盤圓點：按下時放大並加深，給予明確選取感 */
+        .theme-dot:active { filter: brightness(0.85); transform: scale(1.15); }
+        /* 圖片刪除鈕與縮放把手：按下時同樣給予放大回饋 */
+        .item-del-tag, .resize-handle {
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
         }
-        .btn-sub { 
-            background: rgba(255, 255, 255, 0.8); 
-            color: var(--main); 
-            border: 1.5px solid var(--main); 
-        }
-        .btn-sub:active {
-            transform: scale(0.96);
-            background: var(--sub);
-        }
+        .item-del-tag:active { transform: scale(1.15); filter: brightness(0.9); }
+        .resize-handle:active { transform: scale(1.15); filter: brightness(0.88); }
         
-        /* 頁面頂部 Sticky Bar (Apple Keynote 風格) */
-        .header-bar {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: calc(16px + env(safe-area-inset-top, 0px)) 24px 16px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            z-index: 100;
-        }
+        .overlay { position: fixed; inset: 0; transform: translateX(100%); background: var(--bg); z-index: 2000; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; visibility: hidden; }
+        .overlay.open { transform: translateX(0); visibility: visible; }
 
-        /* 原生 Overlay 層 (像 iOS 下方滑出的全面屏卡片) */
-        .overlay { 
-            position: fixed; 
-            inset: 0; 
-            transform: translateX(100%); 
-            background: var(--bg); 
-            z-index: 2000; 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; 
-            box-sizing: border-box; 
-            display: flex; 
-            flex-direction: column; 
-            visibility: hidden; 
-            opacity: 0;
-        }
-        .overlay.open { 
-            transform: translateX(0); 
-            visibility: visible; 
-            opacity: 1;
-        }
-
-        /* 原生半螢幕底部面板 (Action Sheet) */
-        .action-sheet { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: rgba(255, 255, 255, 0.9); 
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border-radius: 32px 32px 0 0; 
-            padding: 24px 24px calc(40px + var(--safe-bottom)); 
-            box-sizing: border-box; 
-            z-index: 5000; 
-            transform: translateY(100%); 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            box-shadow: 0 -15px 40px rgba(0,0,0,0.08); 
-            border-top: 1px solid rgba(255,255,255,0.4);
-        }
+        /* 下方選單 */
+        .action-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 24px 24px 0 0; padding: 25px 20px 40px; box-sizing: border-box; z-index: 5000; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); }
         .action-sheet.show { transform: translateY(0); }
-        
-        .sheet-btn { 
-            width: 100%; 
-            padding: 16px; 
-            border: none; 
-            background: rgba(0, 0, 0, 0.04); 
-            border-radius: 16px; 
-            margin-bottom: 12px; 
-            font-size: 16px; 
-            font-weight: 500;
-            text-align: left; 
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-        .sheet-btn:active {
-            transform: scale(0.98);
-            background: rgba(0, 0, 0, 0.08);
-        }
+        .sheet-btn { width: 100%; padding: 16px; border: none; background: var(--gray); border-radius: 14px; margin-bottom: 10px; font-size: 16px; text-align: left; }
 
-        /* 磨砂圓角網格卡片 */
-        .clothe-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 16px; 
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .clothe-box { 
-            background: var(--card-bg); 
-            aspect-ratio: 1; 
-            border-radius: var(--border-radius-md); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            position: relative; 
-            border: 2px solid transparent; 
-            box-shadow: 0 4px 16px rgba(0,0,0,0.03); 
-            transition: var(--transition-smooth);
-            cursor: pointer;
-        }
-        .clothe-box:active {
-            transform: scale(0.93);
-        }
-        .clothe-box img { 
-            width: 82%; 
-            height: 82%; 
-            object-fit: contain; 
-            pointer-events: none; 
-            transition: transform 0.3s ease;
+        /* 網格 */
+        .clothe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 15px; }
+        .clothe-box { background: white; aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .clothe-box img { width: 85%; height: 85%; object-fit: contain; pointer-events: none; }
+        .item-del-tag { position: absolute; top: -8px; right: -8px; background: var(--red); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; }
+
+        #board-stage { flex: 1; position: relative; background: #fff; overflow: hidden; background-image: radial-gradient(#eee 1px, transparent 1px); background-size: 20px 20px; }
+        
+        /* 貼紙與控制點 */
+        .sticker-wrapper { position: absolute; touch-action: none; padding: 10px; border: 1px dashed transparent; cursor: move; display: inline-block; }
+        .sticker-wrapper.selected { border: 1.5px dashed var(--blue); }
+        .sticker-wrapper img { display: block; object-fit: contain; width: 100%; height: 100%; pointer-events: none; }
+        
+        /* 縮放把手 */
+        .resize-handle { 
+            position: absolute; bottom: -5px; right: -5px; background: var(--blue); color: white; 
+            width: 22px; height: 22px; border-radius: 50%; font-size: 12px; display: none; 
+            align-items: center; justify-content: center; border: 2px solid white; z-index: 10; cursor: se-resize;
+            touch-action: none;
         }
         
-        /* 標籤小按鈕，更細緻高雅 */
-        .item-del-tag { 
-            position: absolute; 
-            top: -6px; 
-            right: -6px; 
-            background: var(--red); 
-            color: white; 
-            width: 26px; 
-            height: 26px; 
-            border-radius: 50%; 
-            font-size: 11px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border: 2px solid white; 
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            z-index: 10; 
-            font-weight: bold;
-            transition: var(--transition-smooth);
-        }
-        .item-del-tag:active {
-            transform: scale(0.8);
-        }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 6000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 320px; padding: 25px; border-radius: 24px; }
+        .modal input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #eee; border-radius: 10px; box-sizing: border-box; }
+    </style></head><body class="theme-pink">
 
-        /* 模板去背樣式 */
-        .remove-bg { mix-blend-mode: multiply; filter: contrast(1.1); }
-        .bg-rm-tag { 
-            position: absolute; 
-            bottom: -6px; 
-            left: -6px; 
-            background: var(--blue); 
-            color: white; 
-            width: 26px; 
-            height: 26px; 
-            border-radius: 50%; 
-            font-size: 11px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border: 2px solid white; 
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            z-index: 10; 
-            font-weight: bold;
-            transition: var(--transition-smooth);
-        }
-        .bg-rm-tag:active {
-            transform: scale(0.8);
-        }
-
-        /* 畫板畫布設計 - Apple 優雅點狀背景 */
-        #board-stage { 
-            flex: 1; 
-            position: relative; 
-            background: #ffffff; 
-            overflow: hidden; 
-            background-image: radial-gradient(rgba(0,0,0,0.06) 1.5px, transparent 1.5px); 
-            background-size: 24px 24px; 
-        }
-        .sticker-wrapper { 
-            position: absolute; 
-            touch-action: none; 
-            padding: 10px; 
-            cursor: move; 
-            transform-origin: center center; 
-            transition: border 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        /* 彈出視窗：iOS 系統彈窗設計 */
-        .modal { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            z-index: 6000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 24px; 
-        }
-        .modal-content { 
-            background: rgba(255, 255, 255, 0.95); 
-            width: 100%; 
-            max-width: 320px; 
-            padding: 28px; 
-            border-radius: 30px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.4);
-            animation: modal-scale 0.3s var(--spring-easing);
-            text-align: center;
-        }
-        @keyframes modal-scale {
-            from { transform: scale(0.85); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        .modal h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 14px;
-        }
-        .modal input { 
-            width: 100%; 
-            padding: 14px; 
-            margin: 8px 0; 
-            border: 1px solid rgba(0,0,0,0.08); 
-            background: rgba(0,0,0,0.02);
-            border-radius: 12px; 
-            box-sizing: border-box; 
-            font-size: 15px;
-            outline: none;
-            transition: var(--transition-smooth);
-        }
-        .modal input:focus {
-            border-color: var(--main);
-            background: #ffffff;
-            box-shadow: 0 0 0 3px var(--sub);
-        }
-    </style>
-</head>
-<body class="theme-pink">
-
-    <!-- 首頁 (已修正：預設顯示 active-view) -->
+    <!-- 首頁 -->
     <div id="view-home" class="view active-view" style="align-items: center; justify-content: center;">
         <div class="home-palette-area">
             <button class="palette-btn" onclick="document.getElementById('home-menu').classList.toggle('open')">🎨</button>
@@ -385,11 +98,11 @@
                 <div class="theme-dot" style="background:#f06292;" onclick="setTheme('pink')"></div>
                 <div class="theme-dot" style="background:#9575cd;" onclick="setTheme('purple')"></div>
                 <div class="theme-dot" style="background:#a1887f;" onclick="setTheme('beige')"></div>
-                <div class="theme-dot" style="background:#a1c2ed;" onclick="setTheme('red')"></div>
+                <div class="theme-dot" style="background:#e57373;" onclick="setTheme('red')"></div>
                 <div class="theme-dot" style="background:#81c784;" onclick="setTheme('green')"></div>
             </div>
         </div>
-        <h1 style="letter-spacing: 6px; color: var(--main); font-size: 38px; font-weight: 800; margin-bottom: 35px; text-shadow: 0 2px 10px rgba(0,0,0,0.02);">OOTD STUDIO</h1>
+        <h1 style="letter-spacing: 10px; color: var(--main); font-size: 32px; margin-bottom: 30px;">OOTD STUDIO</h1>
         <button class="pill-btn btn-main" onclick="triggerUpload('wardrobe')">＋ 加入新單品</button>
         <button class="pill-btn btn-sub" onclick="toggleOverlay('wardrobe-overlay', true)">我的衣櫃</button>
         <button class="pill-btn btn-sub" onclick="toggleOverlay('board-list-overlay', true)">穿搭畫板庫</button>
@@ -398,92 +111,73 @@
 
     <!-- 畫板庫 Overlay -->
     <div id="board-list-overlay" class="overlay">
-        <div class="header-bar">
-            <button class="btn-sub" style="padding:8px 18px; width:auto; border-radius:18px; font-size:14px; font-weight:500;" onclick="toggleOverlay('board-list-overlay', false)">❮ 返回</button>
-            <h2 style="margin:0; font-size: 20px; font-weight: 700;">我的穿搭畫板</h2>
-            <button class="btn-main" style="width:42px; height:42px; border-radius:50%; font-size: 20px;" onclick="createNewBoard()">＋</button>
+        <div class="header" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px;">
+            <button class="btn-sub" style="padding:5px 15px; width:auto; border-radius:12px;" onclick="toggleOverlay('board-list-overlay', false)">❮ 返回</button>
+            <h2 style="margin:0; font-size: 18px;">我的穿搭畫板</h2>
+            <button class="btn-main" style="width:38px; height:38px; border-radius:50%;" onclick="createNewBoard()">＋</button>
         </div>
-        <div id="board-items-list" style="overflow-y:auto; flex:1; padding: 20px;"></div>
+        <div id="board-items-list" style="overflow-y:auto; flex:1;"></div>
     </div>
 
     <!-- 畫板編輯頁 -->
     <div id="view-board" class="view">
-        <div class="header-bar" style="padding-top: 14px; padding-bottom: 14px;">
-            <button class="btn-sub" style="padding: 8px 16px; width: auto; font-size: 13px; border-radius: 16px;" onclick="switchView('view-home')">❮ 退出</button>
-            <h3 id="current-board-name" style="margin:0; font-size: 16px; font-weight: 700; color: var(--main);">新畫板</h3>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-sub" style="padding: 8px 14px; width: auto; font-size: 13px; border-radius: 16px;" onclick="toggleOverlay('template-overlay', true)">+ 模板</button>
-                <button class="btn-sub" style="padding: 8px 14px; width: auto; font-size: 13px; border-radius: 16px;" onclick="toggleOverlay('wardrobe-overlay', true)">+ 衣櫃</button>
-                <button class="btn-main" style="padding: 8px 18px; width: auto; font-size: 13px; border-radius: 16px;" onclick="saveCurrentBoard()">儲存</button>
+        <div style="padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: white; border-bottom: 1px solid #f0f0f0;">
+            <button class="btn-sub" style="padding: 6px 12px; width: auto; font-size: 13px; border-radius: 12px;" onclick="switchView('view-home')">❮ 退出</button>
+            <h3 id="current-board-name" style="margin:0; font-size: 14px; color: var(--main);">新畫板</h3>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn-sub" style="padding: 6px 12px; width: auto; font-size: 12px; border-radius: 12px;" onclick="toggleOverlay('wardrobe-overlay', true)">+ 衣櫃</button>
+                <button class="btn-main" style="padding: 6px 15px; width: auto; font-size: 12px; border-radius: 12px;" onclick="saveCurrentBoard()">儲存</button>
             </div>
         </div>
         <div id="board-stage" onclick="deselectAllStickers()"></div>
     </div>
 
-    <!-- 穿搭模板 Overlay -->
-    <div id="template-overlay" class="overlay">
-        <div class="header-bar">
-            <button class="btn-sub" style="padding:8px 18px; width:auto; border-radius:18px; font-size:14px;" onclick="toggleOverlay('template-overlay', false)">❮ 返回</button>
-            <h2 style="margin:0; font-size: 20px; font-weight: 700;">穿搭模板</h2>
-            <div style="width:42px;"></div>
-        </div>
-        <div style="overflow-y:auto; flex:1;">
-            <div class="clothe-grid" id="template-grid"></div>
-        </div>
-    </div>
-
     <!-- 衣櫃 Overlay -->
     <div id="wardrobe-overlay" class="overlay">
-        <div class="header-bar">
-            <button class="btn-sub" style="padding:8px 18px; width:auto; border-radius:18px; font-size:14px;" onclick="handleBack()">❮ 返回</button>
-            <h2 id="wardrobe-title" style="margin:0; font-size: 20px; font-weight: 700;">我的衣櫃</h2>
-            <button class="btn-main" style="width:42px; height:42px; border-radius:50%; font-size:20px;" onclick="headerAddAction()">＋</button>
+        <div class="header" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px;">
+            <button class="btn-sub" style="padding:5px 15px; width:auto; border-radius:12px;" onclick="handleBack()">❮ 返回</button>
+            <h2 id="wardrobe-title" style="margin:0; font-size: 18px;">我的衣櫃</h2>
+            <button class="btn-main" style="width:38px; height:38px; border-radius:50%;" onclick="headerAddAction()">＋</button>
         </div>
-        <div id="cat-list" style="overflow-y:auto; flex:1; padding: 20px;"></div>
+        <div id="cat-list" style="overflow-y:auto; flex:1;"></div>
         <div id="item-list" style="display:none; overflow-y:auto; flex:1;">
             <div class="clothe-grid" id="grid"></div>
         </div>
-        <div id="float-action-wrap" style="position: absolute; bottom: calc(30px + var(--safe-bottom)); left:0; width:100%; display:none; justify-content:center;">
-            <button class="pill-btn btn-main" style="width:85%; height: 58px; border-radius: 29px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);" onclick="confirmToBoard()">確認加入畫板</button>
+        <div id="float-action-wrap" style="position: absolute; bottom: 30px; left:0; width:100%; display:none; justify-content:center;">
+            <button class="pill-btn btn-main" style="width:80%;" onclick="confirmToBoard()">確認加入畫板</button>
         </div>
     </div>
 
     <!-- 靈感庫 Overlay -->
     <div id="inspi-overlay" class="overlay">
-        <div class="header-bar">
-            <button class="btn-sub" style="padding:8px 18px; width:auto; border-radius:18px; font-size:14px;" onclick="toggleOverlay('inspi-overlay', false)">❮ 返回</button>
-            <h2 style="margin:0; font-size: 20px; font-weight: 700;">靈感庫</h2>
-            <button class="btn-main" style="width:42px; height:42px; border-radius:50%; font-size:20px;" onclick="triggerUpload('inspi')">＋</button>
+        <div class="header" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px;">
+            <button class="btn-sub" style="padding:5px 15px; width:auto; border-radius:12px;" onclick="toggleOverlay('inspi-overlay', false)">❮ 返回</button>
+            <h2 style="margin:0; font-size: 18px;">靈感庫</h2>
+            <button class="btn-main" style="width:38px; height:38px; border-radius:50%;" onclick="triggerUpload('inspi')">＋</button>
         </div>
         <div id="inspi-grid" class="clothe-grid" style="overflow-y:auto;"></div>
-        <div id="inspi-action-wrap" style="position: absolute; bottom: calc(30px + var(--safe-bottom)); left:0; width:100%; display:none; justify-content:center;">
-            <button class="pill-btn btn-main" style="width:85%; height: 58px; border-radius: 29px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);" onclick="confirmInspiToBoard()">加入畫板參考</button>
+        <div id="inspi-action-wrap" style="position: absolute; bottom: 30px; left:0; width:100%; display:none; justify-content:center;">
+            <button class="pill-btn btn-main" style="width:80%;" onclick="confirmInspiToBoard()">加入畫板參考</button>
         </div>
     </div>
 
     <!-- 存入選單 -->
     <div id="save-sheet" class="action-sheet">
-        <h3 style="text-align:center; margin-bottom:18px; font-size: 18px; font-weight: 700;">選擇要存入的分類</h3>
-        
-        <!-- 保留 W3Schools 背景去背跳轉功能按鈕 -->
-        <button class="sheet-btn" style="background:#e3f2fd; color:#0071e3; text-align:center; font-weight:bold; margin-bottom: 16px;" onclick="window.open('https://www.w3schools.com/tools/tool_background_remover.php', '_blank')">
-            ✂️ 前往 W3Schools 去背網頁
-        </button>
-        
+        <h3 style="text-align:center; margin-bottom:20px; font-size: 16px;">選擇要存入的分類</h3>
         <div id="cat-options"></div>
         <button class="sheet-btn" style="background:var(--sub); color:var(--main); text-align:center;" onclick="addNewCatAndSave()">＋ 建立新的分類</button>
-        <button class="sheet-btn" style="text-align:center; background:none; color:#999; font-weight: normal;" onclick="closeSheet()">取消</button>
+        <button class="sheet-btn" style="text-align:center; background:none; color:#bbb;" onclick="closeSheet()">取消</button>
     </div>
 
     <!-- 儲存彈窗 -->
     <div id="save-modal" class="modal">
         <div class="modal-content">
-            <h3>儲存版面</h3>
+            <h3 style="margin-top:0;">儲存版面</h3>
             <input type="text" id="board-input-name" placeholder="這套穿搭的名字...">
             <input type="date" id="board-input-date">
-            <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn-sub" style="flex:1; height: 48px; border-radius: 14px; font-size: 15px;" onclick="document.getElementById('save-modal').style.display='none'">取消</button>
-                <button class="btn-main" style="flex:1; height: 48px; border-radius: 14px; font-size: 15px;" onclick="confirmSaveBoard()">完成</button>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-sub" style="flex:1; height: 44px;" onclick="document.getElementById('save-modal').style.display='none'">取消</button>
+                <button class="btn-main" style="flex:1; height: 44px;" onclick="confirmSaveBoard()">完成</button>
             </div>
         </div>
     </div>
@@ -498,16 +192,6 @@
         let selectedItems = new Set();
         let selectedInspi = new Set();
         let currentEditingId = null;
-
-        // 預設穿搭模板 SVG 資料 (使用 DataURL 以便離線使用)
-        const templates = [
-            { name: "九宮格線", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='300' height='300' fill='none' stroke='%23ddd' stroke-width='4'/><line x1='100' y1='0' x2='100' y2='300' stroke='%23eee' stroke-width='2'/><line x1='200' y1='0' x2='200' y2='300' stroke='%23eee' stroke-width='2'/><line x1='0' y1='100' x2='300' y2='100' stroke='%23eee' stroke-width='2'/><line x1='0' y1='200' x2='300' y2='200' stroke='%23eee' stroke-width='2'/></svg>" },
-            { name: "模特人形", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='400' viewBox='0 0 100 200'><circle cx='50' cy='25' r='12' fill='none' stroke='%23ccc' stroke-width='2'/><path d='M50,37 L50,110 M30,50 L50,37 L70,50 M35,150 L50,110 L65,150' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round'/></svg>" },
-            { name: "拍立得框", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='250' height='300' viewBox='0 0 250 300'><rect width='250' height='300' fill='%23fff' stroke='%23ddd' stroke-width='2'/><rect x='20' y='20' width='210' height='210' fill='%23fafafa' stroke='%23eee'/><text x='125' y='270' font-family='sans-serif' font-size='14' fill='%23aaa' text-anchor='middle'>TODAY OOTD</text></svg>" },
-            { name: "雜誌封面", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'><rect width='300' height='400' fill='none' stroke='%23f06292' stroke-width='4'/><text x='20' y='50' font-family='Impact' font-size='36' fill='%23f06292'>FASHION</text><text x='20' y='80' font-family='sans-serif' font-size='12' fill='%23999'>LOOKBOOK COLLECTION</text></svg>" },
-            { name: "週間穿搭", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='350' height='100' viewBox='0 0 350 100'><rect width='350' height='100' rx='10' fill='%23fce4ec' opacity='0.5'/><text x='20' y='55' font-family='sans-serif' font-weight='bold' font-size='22' fill='%23f06292'>WEEKLY STYLE</text></svg>" },
-            { name: "圓形背景", src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><circle cx='150' cy='150' r='130' fill='%23efebe9' opacity='0.6'/></svg>" }
-        ];
 
         function setTheme(t) {
             document.body.className = 'theme-' + t;
@@ -527,28 +211,13 @@
                 if(id === 'wardrobe-overlay') renderCats();
                 if(id === 'inspi-overlay') renderInspi();
                 if(id === 'board-list-overlay') renderBoardList();
-                if(id === 'template-overlay') renderTemplates();
                 el.classList.add('open');
             } else el.classList.remove('open');
         }
 
-        function renderTemplates() {
-            document.getElementById('template-grid').innerHTML = templates.map((tmpl, i) => `
-                <div class="clothe-box" onclick="addTemplateToBoard(${i})">
-                    <img src="${tmpl.src}">
-                    <div style="position:absolute; bottom:8px; font-size:11px; font-weight:600; color:#333; background:rgba(255,255,255,0.9); padding:4px 8px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">${tmpl.name}</div>
-                </div>
-            `).join('');
-        }
-
-        function addTemplateToBoard(index) {
-            createSticker(templates[index].src, true);
-            toggleOverlay('template-overlay', false);
-        }
-
         function saveAndDeepJump(cat) {
             if(!clothesDB[cat]) clothesDB[cat] = [];
-            clothesDB[cat].push({ src: pendingData, removeBg: false }); // 調整資料結構，記錄是否去背
+            clothesDB[cat].push(pendingData);
             saveAndRefresh();
             activeCat = cat;
             document.getElementById('cat-list').style.display = 'none';
@@ -570,9 +239,9 @@
             document.getElementById('wardrobe-title').innerText = "我的衣櫃";
             document.getElementById('float-action-wrap').style.display = 'none';
             document.getElementById('cat-list').innerHTML = Object.keys(clothesDB).map(cat => `
-                <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding:20px; border-radius:18px; margin-bottom:12px; display:flex; justify-content:space-between; align-items: center; box-shadow:0 4px 12px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5); cursor: pointer; transition: var(--transition-smooth);" onclick="enterCategory('${cat}')">
-                    <div style="flex:1; font-weight: 600; font-size: 16px;">${cat} <span style="font-size: 14px; font-weight: normal; color: #8e8e93; margin-left: 6px;">(${clothesDB[cat].length})</span></div>
-                    <div style="color:var(--red); font-size: 18px; padding:0 8px; font-weight: bold;" onclick="event.stopPropagation(); deleteCategory('${cat}')">✕</div>
+                <div style="background:white; padding:18px; border-radius:16px; margin-bottom:10px; display:flex; justify-content:space-between; box-shadow:0 2px 5px rgba(0,0,0,0.02);" onclick="enterCategory('${cat}')">
+                    <div style="flex:1;">${cat} (${clothesDB[cat].length})</div>
+                    <div style="color:var(--red); padding:0 5px;" onclick="event.stopPropagation(); deleteCategory('${cat}')">✕</div>
                 </div>
             `).join('');
         }
@@ -585,27 +254,13 @@
             renderGrid();
         }
 
-        // 新增模板去背切換按鈕，點擊左下角藍色圓圈圖示「✂️」即可在衣櫃中即時去背/恢復背景
-        function toggleItemBgRemove(index, event) {
-            event.stopPropagation();
-            const item = clothesDB[activeCat][index];
-            item.removeBg = !item.removeBg;
-            saveAndRefresh();
-            renderGrid();
-        }
-
         function renderGrid() {
-            document.getElementById('grid').innerHTML = clothesDB[activeCat].map((item, i) => {
-                const imgSrc = typeof item === 'object' ? item.src : item;
-                const isRmBg = typeof item === 'object' ? item.removeBg : false;
-                return `
-                    <div class="clothe-box" style="border-color:${selectedItems.has(`${activeCat}-${i}`)?'var(--blue)':'transparent'}; box-shadow: ${selectedItems.has(`${activeCat}-${i}`)?'0 0 0 3px rgba(0,113,227,0.15)':'0 4px 16px rgba(0,0,0,0.03)'};" onclick="toggleSelection('${activeCat}',${i},this)">
-                        <div class="item-del-tag" onclick="event.stopPropagation(); deleteItem('${activeCat}',${i}')">✕</div>
-                        <div class="bg-rm-tag" onclick="toggleItemBgRemove(${i}, event)" title="模板去背">✂️</div>
-                        <img src="${imgSrc}" class="${isRmBg ? 'remove-bg' : ''}">
-                    </div>
-                `;
-            }).join('');
+            document.getElementById('grid').innerHTML = clothesDB[activeCat].map((img, i) => `
+                <div class="clothe-box" style="border-color:${selectedItems.has(`${activeCat}-${i}`)?'var(--blue)':'transparent'}" onclick="toggleSelection('${activeCat}',${i},this)">
+                    <div class="item-del-tag" onclick="event.stopPropagation(); deleteItem('${activeCat}',${i})">✕</div>
+                    <img src="${img}">
+                </div>
+            `).join('');
         }
 
         // 畫板邏輯
@@ -613,19 +268,17 @@
             currentEditingId = Date.now();
             document.getElementById('board-stage').innerHTML = "";
             document.getElementById('current-board-name').innerText = "未命名版面";
-            document.getElementById('board-input-name').value = ""; 
+            document.getElementById('board-input-name').value = ""; // 清空彈窗輸入框
             toggleOverlay('board-list-overlay', false);
             switchView('view-board');
         }
 
         function renderBoardList() {
             document.getElementById('board-items-list').innerHTML = savedBoards.map(b => `
-                <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); padding:20px; border-radius:20px; margin-bottom:14px; box-shadow:0 6px 18px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; transition: var(--transition-smooth);" onclick="loadBoard(${b.id})">
-                    <div>
-                        <div style="font-weight:700; font-size: 16px; color:var(--text);">${b.name}</div>
-                        <div style="font-size:12px; color:#8e8e93; margin-top:6px; display:flex; align-items:center; gap: 4px;">📅 ${b.date}</div>
-                    </div>
-                    <div style="color:var(--red); font-size:14px; font-weight: 600; cursor: pointer; padding: 10px;" onclick="event.stopPropagation(); deleteBoard(${b.id})">刪除</div>
+                <div style="background:white; padding:18px; border-radius:16px; margin-bottom:12px; box-shadow:0 2px 5px rgba(0,0,0,0.03);" onclick="loadBoard(${b.id})">
+                    <div style="font-weight:bold; color:var(--main);">${b.name}</div>
+                    <div style="font-size:12px; color:#999; margin-top:5px;">📅 ${b.date}</div>
+                    <div style="color:var(--red); text-align:right; font-size:12px; margin-top:5px;" onclick="event.stopPropagation(); deleteBoard(${b.id})">刪除</div>
                 </div>
             `).join('');
         }
@@ -642,7 +295,6 @@
         }
 
         function saveCurrentBoard() {
-            deselectAllStickers(); // 儲存前先取消選取框，讓畫面乾淨
             document.getElementById('board-input-date').valueAsDate = new Date();
             document.getElementById('save-modal').style.display = 'flex';
         }
@@ -659,136 +311,192 @@
             
             localStorage.setItem('ootd_boards', JSON.stringify(savedBoards));
             
+            // 1. 關閉彈窗
             document.getElementById('save-modal').style.display = 'none';
+            
+            // 2. 切換回首頁 (因為 Overlay 是覆蓋在首頁上的)
             switchView('view-home');
             
+            // 3. 自動開啟畫板庫 Overlay 並渲染最新列表
             setTimeout(() => {
                 toggleOverlay('board-list-overlay', true);
             }, 100);
         }
 
-        // 貼紙邏輯 (新增縮放屬性、重複產生支援與去背狀態傳遞)
-        function createSticker(src, isTemplate = false, isRmBg = false) {
+        // 貼紙邏輯（自由拖曳移動 / 點擊 ✕ 刪除 / 右下角拖曳縮放，且互動時不會被誤判為「點擊空白處」而取消選取）
+        function createSticker(src) {
             const div = document.createElement('div');
             div.className = 'sticker-wrapper';
-            // 給予初始縮放比例與寬度，模板預設放大一點
-            const defaultWidth = isTemplate ? 240 : 130;
-            div.style.width = defaultWidth + 'px';
-            div.setAttribute('data-scale', '1'); 
-            div.setAttribute('data-rmbg', isRmBg ? 'true' : 'false');
             
+            // 初始寬度設為 150px
+            div.style.width = '150px';
+            div.style.height = '150px';
+
+            // 加入隨機微小偏移，確保多張照片匯入時不會「完全完美重疊」
+            const randomOffset = Math.floor(Math.random() * 40);
+            div.style.transform = `translate3d(${randomOffset}px, ${randomOffset}px, 0)`;
+
             div.innerHTML = `
-                <img src="${src}" class="${isRmBg ? 'remove-bg' : ''}" style="width:100%; height:auto; display:block; pointer-events:none;">
-                <div class="item-del-tag" style="display:none; top:-6px; right:-6px; cursor:pointer;" onclick="this.parentElement.remove()">✕</div>
-                <div class="bg-rm-tag" style="display:none; top:-6px; left:-6px; width:22px; height:22px; font-size:10px; cursor:pointer;" onclick="toggleStickerBg(this.parentElement, event)">✂️</div>
+                <img src="${src}">
+                <div class="item-del-tag" style="display:none; top:-10px; right:-10px; cursor:pointer;">✕</div>
+                <div class="resize-handle" style="display:none;">⤡</div>
             `;
+            
             bindStickerEvents(div);
             document.getElementById('board-stage').appendChild(div);
         }
 
-        // 畫板貼紙點擊「✂️」即時去背/恢復背景
-        function toggleStickerBg(wrapper, event) {
-            event.stopPropagation();
-            const img = wrapper.querySelector('img');
-            const isCurrentlyRemoved = wrapper.getAttribute('data-rmbg') === 'true';
-            if (isCurrentlyRemoved) {
-                img.classList.remove('remove-bg');
-                wrapper.setAttribute('data-rmbg', 'false');
-            } else {
-                img.classList.add('remove-bg');
-                wrapper.setAttribute('data-rmbg', 'true');
-            }
-        }
-
         function bindStickerEvents(div) {
-            let active = false, currentX = 0, currentY = 0, initialX, initialY, xOff = 0, yOff = 0;
-            let startDistance = 0, baseScale = 1;
+            const deleteBtn = div.querySelector('.item-del-tag');
+            const resizeBtn = div.querySelector('.resize-handle');
 
-            // 讀取原有的平移與縮放設定
-            const match = div.style.transform.match(/translate3d\((.+)px, (.+)px, .+\)/);
-            if(match) { xOff = parseFloat(match[1]); yOff = parseFloat(match[2]); }
-            let currentScale = parseFloat(div.getAttribute('data-scale')) || 1;
+            // 關鍵修正：整個貼紙（含刪除鈕、縮放把手）的 click 事件一律不再往上冒泡，
+            // 避免點擊/拖曳/縮放結束後觸發外層 board-stage 的 onclick="deselectAllStickers()"，
+            // 導致「一點擊就立刻跳開、取消選取」的問題。
+            div.addEventListener('click', (e) => e.stopPropagation());
 
-            div.onclick = (e) => { 
-                e.stopPropagation(); 
-                deselectAllStickers(); 
-                div.querySelector('.item-del-tag').style.display = 'flex'; 
-                div.querySelector('.bg-rm-tag').style.display = 'flex'; 
-                div.style.zIndex = 1000; 
-                div.style.border = "1.5px dashed var(--blue)";
-                div.style.borderRadius = "12px";
-                div.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+            // 刪除鈕：點擊即刪除，並停止冒泡（雙重保險）
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                div.remove();
+            });
+            // 避免刪除鈕的 mousedown/touchstart 觸發拖曳
+            deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            deleteBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+            // 1. 選取與聚焦邏輯（點擊其他地方才會 deselect）
+            const selectSticker = (e) => {
+                e.stopPropagation(); // 阻止事件向上傳遞，避免按了之後馬上跳開
+                if (div.classList.contains('selected')) return; // 已選取則不重複處理，避免中斷拖曳中的狀態
+                deselectAllStickers();
+                div.classList.add('selected');
+                deleteBtn.style.display = 'flex';
+                resizeBtn.style.display = 'flex';
+                div.style.zIndex = 1000;
             };
 
-            // 滑鼠滾輪縮放支援 (PC端)
-            div.addEventListener('wheel', (e) => {
-                if (div.style.border === "none" || div.style.border === "") return; // 只有選取狀態才能縮放
-                e.preventDefault();
-                currentScale += e.deltaY * -0.001;
-                currentScale = Math.min(Math.max(0.3, currentScale), 4); // 限制縮放範圍 0.3倍 ~ 4倍
-                div.setAttribute('data-scale', currentScale);
-                updateTransform();
-            }, { passive: false });
+            div.addEventListener('mousedown', selectSticker);
+            div.addEventListener('touchstart', selectSticker, { passive: true });
 
-            // 觸控與拖曳、雙指縮放 (行動端)
-            div.addEventListener("touchstart", (e) => {
-                deselectAllStickers(); 
-                div.querySelector('.item-del-tag').style.display = 'flex'; 
-                div.querySelector('.bg-rm-tag').style.display = 'flex'; 
-                div.style.zIndex = 1000; 
-                div.style.border = "1.5px dashed var(--blue)";
-                div.style.borderRadius = "12px";
-                div.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+            // 2. 拖曳移動邏輯 (相容滑鼠與觸控)
+            let isDragging = false;
+            let currentX = 0, currentY = 0;
+            let initialX, initialY;
+            let xOff = 0, yOff = 0;
 
-                if (e.touches.length === 1) {
+            const updateOffsets = () => {
+                const match = div.style.transform.match(/translate3d\((-?[\d.]+)px,\s*(-?[\d.]+)px,\s*[^)]+\)/);
+                if(match) { 
+                    xOff = parseFloat(match[1]); 
+                    yOff = parseFloat(match[2]); 
+                }
+            };
+            updateOffsets();
+
+            // 拖曳開始
+            const dragStart = (e) => {
+                // 如果是按在縮放把手或刪除按鈕上，則不觸發拖曳
+                if (e.target === resizeBtn || e.target === deleteBtn) return;
+
+                updateOffsets();
+
+                if (e.type === "touchstart") {
                     initialX = e.touches[0].clientX - xOff;
                     initialY = e.touches[0].clientY - yOff;
-                    active = true;
-                } else if (e.touches.length === 2) {
-                    active = false;
-                    startDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    baseScale = parseFloat(div.getAttribute('data-scale')) || 1;
+                } else {
+                    initialX = e.clientX - xOff;
+                    initialY = e.clientY - yOff;
                 }
-            });
+                isDragging = true;
+            };
 
-            window.addEventListener("touchmove", (e) => {
-                if (active && e.touches.length === 1) {
-                    e.preventDefault();
-                    currentX = e.touches[0].clientX - initialX;
-                    currentY = e.touches[0].clientY - initialY;
-                    xOff = currentX; 
-                    yOff = currentY;
-                    updateTransform();
-                } else if (e.touches.length === 2) {
-                    e.preventDefault();
-                    const currentDistance = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    let factor = currentDistance / startDistance;
-                    currentScale = Math.min(Math.max(0.3, baseScale * factor), 4);
-                    div.setAttribute('data-scale', currentScale);
-                    updateTransform();
+            // 拖曳中
+            const drag = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                let clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+                currentX = clientX - initialX;
+                currentY = clientY - initialY;
+                xOff = currentX;
+                yOff = currentY;
+
+                div.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+            };
+
+            // 拖曳結束
+            const dragEnd = () => {
+                isDragging = false;
+            };
+
+            div.addEventListener('mousedown', dragStart);
+            window.addEventListener('mousemove', drag);
+            window.addEventListener('mouseup', dragEnd);
+
+            div.addEventListener('touchstart', dragStart, { passive: false });
+            window.addEventListener('touchmove', drag, { passive: false });
+            window.addEventListener('touchend', dragEnd);
+
+            // 3. 雙向縮放邏輯 (Resize)
+            let isResizing = false;
+            let startWidth, startHeight, startX, startY;
+
+            const resizeStart = (e) => {
+                e.stopPropagation(); // 阻止氣泡事件，避免觸發選取/拖曳與外層 deselect
+                e.preventDefault();
+                isResizing = true;
+
+                startWidth = parseFloat(div.style.width) || div.offsetWidth;
+                startHeight = parseFloat(div.style.height) || div.offsetHeight;
+
+                startX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+                startY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+            };
+
+            const resizing = (e) => {
+                if (!isResizing) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                let clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+                let clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+                // 以拖曳移動的距離，等比例放大或縮小寬高
+                const deltaX = clientX - startX;
+                const deltaY = clientY - startY;
+                const delta = Math.max(deltaX, deltaY); // 取較大的位移量，讓斜向拖曳也能順暢縮放
+                const newSize = Math.max(50, startWidth + delta); // 限制最小尺寸為 50px
+
+                div.style.width = `${newSize}px`;
+                div.style.height = `${newSize}px`;
+            };
+
+            const resizeEnd = (e) => {
+                if (isResizing) {
+                    isResizing = false;
                 }
-            }, { passive: false });
+            };
 
-            window.addEventListener("touchend", () => { active = false; });
+            resizeBtn.addEventListener('mousedown', resizeStart);
+            window.addEventListener('mousemove', resizing);
+            window.addEventListener('mouseup', resizeEnd);
 
-            function updateTransform() {
-                div.style.transform = `translate3d(${xOff}px, ${yOff}px, 0) scale(${currentScale})`;
-            }
+            resizeBtn.addEventListener('touchstart', resizeStart, { passive: false });
+            window.addEventListener('touchmove', resizing, { passive: false });
+            window.addEventListener('touchend', resizeEnd);
         }
 
         function deselectAllStickers() { 
             document.querySelectorAll('.sticker-wrapper').forEach(s => { 
-                s.querySelector('.item-del-tag').style.display = 'none'; 
-                s.querySelector('.bg-rm-tag').style.display = 'none'; 
+                s.classList.remove('selected');
+                const del = s.querySelector('.item-del-tag');
+                const res = s.querySelector('.resize-handle');
+                if(del) del.style.display = 'none';
+                if(res) res.style.display = 'none';
                 s.style.zIndex = 100; 
-                s.style.border = "none";
-                s.style.boxShadow = "none";
             }); 
         }
 
@@ -801,7 +509,7 @@
                 if(uploadTarget === 'inspi') {
                     inspiDB.unshift(data); saveAndRefresh(); renderInspi();
                 } else if(uploadTarget === 'direct') {
-                    clothesDB[activeCat].push({ src: data, removeBg: false }); saveAndRefresh(); renderGrid();
+                    clothesDB[activeCat].push(data); saveAndRefresh(); renderGrid();
                 } else {
                     pendingData = data;
                     document.getElementById('cat-options').innerHTML = Object.keys(clothesDB).map(cat => `<button class="sheet-btn" onclick="saveAndDeepJump('${cat}')">存入「${cat}」</button>`).join('');
@@ -814,132 +522,17 @@
 
         function triggerUpload(t) { uploadTarget = t; document.getElementById('fileInput').click(); }
         function closeSheet() { document.getElementById('save-sheet').classList.remove('show'); }
-        
-        // --- 核心邏輯保持 100% 相同，確保功能無縫對接 ---
-        function saveAndRefresh() {
-            localStorage.setItem('ootd_clothes', JSON.stringify(clothesDB));
-            localStorage.setItem('ootd_inspi', JSON.stringify(inspiDB));
-        }
-
-        function deleteCategory(cat) {
-            if(confirm(`確定要刪除「${cat}」分類及其所有單品嗎？`)) {
-                delete clothesDB[cat];
-                saveAndRefresh();
-                renderCats();
-            }
-        }
-
-        function deleteItem(cat, index) {
-            if(confirm("確定要刪除此單品嗎？")) {
-                clothesDB[cat].splice(index, 1);
-                saveAndRefresh();
-                renderGrid();
-            }
-        }
-
-        function headerAddAction() {
-            if(document.getElementById('item-list').style.display === 'block') {
-                triggerUpload('direct');
-            } else {
-                triggerUpload('wardrobe');
-            }
-        }
-
-        function handleBack() {
-            if(document.getElementById('item-list').style.display === 'block') {
-                renderCats();
-            } else {
-                toggleOverlay('wardrobe-overlay', false);
-            }
-        }
-
-        function toggleSelection(cat, index, el) {
-            const key = `${cat}-${index}`;
-            if(selectedItems.has(key)) {
-                selectedItems.delete(key);
-                el.style.borderColor = 'transparent';
-                el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.03)';
-            } else {
-                selectedItems.add(key);
-                el.style.borderColor = 'var(--blue)';
-                el.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)';
-            }
-            const hasSelection = selectedItems.size > 0;
-            document.getElementById('float-action-wrap').style.display = hasSelection ? 'flex' : 'none';
-        }
-
-        function confirmToBoard() {
-            selectedItems.forEach(key => {
-                const [cat, idx] = key.split('-');
-                const item = clothesDB[cat][idx];
-                const imgSrc = typeof item === 'object' ? item.src : item;
-                const isRmBg = typeof item === 'object' ? item.removeBg : false;
-                createSticker(imgSrc, false, isRmBg);
-            });
-            selectedItems.clear();
-            document.getElementById('float-action-wrap').style.display = 'none';
-            toggleOverlay('wardrobe-overlay', false);
-            switchView('view-board');
-        }
-
-        function addNewCatAndSave() {
-            const name = prompt("請輸入新分類名稱：");
-            if(name && name.trim()) {
-                const cat = name.trim();
-                saveAndDeepJump(cat);
-            }
-        }
-
-        function renderInspi() {
-            document.getElementById('inspi-action-wrap').style.display = 'none';
-            selectedInspi.clear();
-            document.getElementById('inspi-grid').innerHTML = inspiDB.map((src, i) => `
-                <div class="clothe-box" style="border-color:transparent" onclick="toggleInspiSelection(${i}, this)">
-                    <div class="item-del-tag" onclick="event.stopPropagation(); deleteInspi(${i})">✕</div>
-                    <img src="${src}">
-                </div>
-            `).join('');
-        }
-
-        function toggleInspiSelection(index, el) {
-            if(selectedInspi.has(index)) {
-                selectedInspi.delete(index);
-                el.style.borderColor = 'transparent';
-                el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.03)';
-            } else {
-                selectedInspi.add(index);
-                el.style.borderColor = 'var(--blue)';
-                el.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)';
-            }
-            const hasSelection = selectedInspi.size > 0;
-            document.getElementById('inspi-action-wrap').style.display = hasSelection ? 'flex' : 'none';
-        }
-
-        function confirmInspiToBoard() {
-            selectedInspi.forEach(idx => {
-                createSticker(inspiDB[idx], false, false);
-            });
-            selectedInspi.clear();
-            document.getElementById('inspi-action-wrap').style.display = 'none';
-            toggleOverlay('inspi-overlay', false);
-            switchView('view-board');
-        }
-
-        function deleteInspi(index) {
-            if(confirm("確定要刪除這張靈感圖嗎？")) {
-                inspiDB.splice(index, 1);
-                saveAndRefresh();
-                renderInspi();
-            }
-        }
-
-        function deleteBoard(id) {
-            if(confirm("確定要刪除此畫板嗎？")) {
-                savedBoards = savedBoards.filter(x => x.id !== id);
-                localStorage.setItem('ootd_boards', JSON.stringify(savedBoards));
-                renderBoardList();
-            }
-        }
-    </script>
-</body>
-</html>
+        function handleBack() { if(document.getElementById('item-list').style.display === 'block') renderCats(); else toggleOverlay('wardrobe-overlay', false); }
+        function toggleSelection(c, i, el) { const id=`${c}-${i}`; if(selectedItems.has(id)) { selectedItems.delete(id); el.style.borderColor="transparent"; } else { selectedItems.add(id); el.style.borderColor="var(--blue)"; } document.getElementById('float-action-wrap').style.display = selectedItems.size > 0 ? 'flex' : 'none'; }
+        function confirmToBoard() { selectedItems.forEach(id => { const [c, i]=id.split('-'); createSticker(clothesDB[c][i]); }); selectedItems.clear(); toggleOverlay('wardrobe-overlay', false); switchView('view-board'); }
+        function renderInspi() { document.getElementById('inspi-grid').innerHTML = inspiDB.map((img, i) => `<div class="clothe-box" onclick="toggleInspiSelection(${i}, this)"><div class="item-del-tag" onclick="event.stopPropagation(); deleteInspi(${i})">✕</div><img src="${img}"></div>`).join(''); }
+        function toggleInspiSelection(i, el) { if(selectedInspi.has(i)) { selectedInspi.delete(i); el.style.borderColor="transparent"; } else { selectedInspi.add(i); el.style.borderColor="var(--blue)"; } document.getElementById('inspi-action-wrap').style.display = selectedInspi.size > 0 ? 'flex' : 'none'; }
+        function confirmInspiToBoard() { selectedInspi.forEach(i => createSticker(inspiDB[i])); selectedInspi.clear(); toggleOverlay('inspi-overlay', false); switchView('view-board'); }
+        function deleteItem(c, i) { if(confirm("確定刪除此單品？")) { clothesDB[c].splice(i, 1); saveAndRefresh(); renderGrid(); } }
+        function deleteCategory(c) { if(confirm("確定刪除整個分類？")) { delete clothesDB[c]; saveAndRefresh(); renderCats(); } }
+        function deleteInspi(i) { if(confirm("確定刪除此靈感圖？")) { inspiDB.splice(i, 1); saveAndRefresh(); renderInspi(); } }
+        function deleteBoard(id) { if(confirm("確定刪除此穿搭版面？")) { savedBoards = savedBoards.filter(x => x.id !== id); localStorage.setItem('ootd_boards', JSON.stringify(savedBoards)); renderBoardList(); } }
+        function saveAndRefresh() { localStorage.setItem('ootd_clothes', JSON.stringify(clothesDB)); localStorage.setItem('ootd_inspi', JSON.stringify(inspiDB)); }
+        function headerAddAction() { if(document.getElementById('item-list').style.display === 'block') { uploadTarget = 'direct'; document.getElementById('fileInput').click(); } else { const n = prompt("輸入新分類名稱："); if(n && !clothesDB[n]) { clothesDB[n] = []; saveAndRefresh(); renderCats(); } } }
+        function addNewCatAndSave() { const n = prompt("輸入新分類名稱："); if(n) saveAndDeepJump(n); }
+    </script></body></html>
